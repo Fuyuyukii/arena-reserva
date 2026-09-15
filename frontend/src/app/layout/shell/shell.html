@@ -1,0 +1,40 @@
+<header class="topbar">
+  <div class="container topbar-inner">
+    <a routerLink="/" class="brand">
+      <span class="brand-mark" aria-hidden="true"></span>
+      Arena<strong>Reserva</strong>
+    </a>
+
+    <nav class="nav">
+      <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Quadras</a>
+      @if (auth.loggedIn() && !auth.isAdmin()) {
+        <a routerLink="/minhas-reservas" routerLinkActive="active">Minhas reservas</a>
+      }
+      @if (auth.isAdmin()) {
+        <a routerLink="/admin/quadras" routerLinkActive="active">Gerenciar quadras</a>
+        <a routerLink="/admin/reservas" routerLinkActive="active">Gerenciar reservas</a>
+        <a routerLink="/admin/relatorio" routerLinkActive="active">Relatório</a>
+      }
+    </nav>
+
+    <div class="session">
+      @if (auth.loggedIn()) {
+        <span class="session-user">{{ auth.user()?.name }}</span>
+        <button type="button" class="btn btn-ghost btn-on-ink" (click)="logout()">Sair</button>
+      } @else {
+        <a routerLink="/login" class="btn btn-ghost btn-on-ink">Entrar</a>
+        <a routerLink="/cadastro" class="btn btn-primary">Criar conta</a>
+      }
+    </div>
+  </div>
+</header>
+
+<main>
+  <router-outlet></router-outlet>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <span>ArenaReserva — reserva de quadras esportivas.</span>
+  </div>
+</footer>

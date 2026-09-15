@@ -1,0 +1,43 @@
+<section class="container">
+  <form class="card form-card" (ngSubmit)="login()">
+    <h1>Entrar</h1>
+    <p class="text-muted">Acesse sua conta para reservar quadras.</p>
+
+    @if (error()) {
+      <p class="alert alert-danger">{{ error() }}</p>
+    }
+
+    <div class="field">
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" [(ngModel)]="email" required autocomplete="email" placeholder="email@exemplo.com" />
+    </div>
+
+    <div class="field">
+      <label for="password">Senha</label>
+      <input id="password" name="password" type="password" [(ngModel)]="password" required autocomplete="current-password" placeholder="Sua senha" />
+    </div>
+
+    <button type="submit" class="btn btn-primary" [disabled]="loading()">
+      {{ loading() ? 'Entrando…' : 'Entrar' }}
+    </button>
+
+    <p class="form-links">
+      <a routerLink="/recuperar-senha">Esqueci minha senha</a>
+      <a routerLink="/cadastro">Criar uma conta</a>
+    </p>
+
+    @if (isDev) {
+      <div class="dev-callout">
+        <p><strong>Ambiente de desenvolvimento:</strong> pule o login e entre direto como admin ou cliente.</p>
+        <div class="dev-callout-actions">
+          <button type="button" class="btn btn-ghost" [disabled]="loading()" (click)="loginAsAdmin()">
+            Entrar como admin (dev)
+          </button>
+          <button type="button" class="btn btn-ghost" [disabled]="loading()" (click)="loginAsCustomer()">
+            Entrar como cliente (dev)
+          </button>
+        </div>
+      </div>
+    }
+  </form>
+</section>

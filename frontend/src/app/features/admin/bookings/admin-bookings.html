@@ -1,0 +1,141 @@
+<section class="container page">
+  <div class="page-header">
+    <div>
+      <h1>Administração de reservas</h1>
+      <p class="text-muted">Acompanhe as reservas, registre não comparecimentos ou crie uma reserva de encaixe.</p>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="openManualModal()">Criar reserva de encaixe</button>
+  </div>
+
+  @if (error()) {
+    <p class="alert alert-danger">{{ error() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="text-muted">Carregando reservas…</p>
+  } @else if (bookings().length === 0) {
+    <div class="empty-state">
+      <p>Nenhuma reserva registrada ainda.</p>
+    </div>
+  } @else {
+    <div class="table-responsive">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Quadra</th>
+          <th>Cliente</th>
+          <th>Início</th>
+          <th>Fim</th>
+          <th>Valor</th>
+          <th>Status</th>
+          <th>Ações</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (booking of bookings(); track booking.id) {
+          <tr>
+            <td>{{ courtName(booking.courtId) }}</td>
+            <td>
+              @if (booking.customer) {
+                <span class="customer-name">{{ booking.customer.name }}</span>
+                <span class="customer-email">{{ booking.customer.email }}</span>
+              } @else {
+                <span class="text-muted">Cliente #{{ booking.customerId }}</span>
+              }
+            </td>
+            <td>{{ booking.start | date: 'dd/MM/yyyy HH:mm' }}</td>
+            <td>{{ booking.end | date: 'HH:mm' }}</td>
+            <td>R$ {{ booking.totalAmount.toFixed(2) }}</td>
+            <td><span class="badge" [class]="badgeClass(booking.status)">{{ label(booking.status) }}</span></td>
+            <td class="actions">
+              @if (booking.status === 'PENDING' || booking.status === 'CONFIRMED') {
+                <button
+                  type="button"
+                  class="btn btn-danger btn-sm"
+                  [disabled]="processing() === booking.id"
+                  (click)="cancel(booking)"
+                >
+                  Cancelar
+                </button>
+              }
+              @if (canMarkNoShow(booking)) {
+                <button
+                  type="button"
+                  class="btn btn-ghost btn-sm"
+                  [disabled]="processing() === booking.id"
+                  (click)="markNoShow(booking)"
+                >
+                  Não compareceu
+                </button>
+              }
+              @if (booking.status !== 'PENDING' && booking.status !== 'CONFIRMED' && !canMarkNoShow(booking)) {
+                <span class="text-muted">—</span>
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+    </div>
+  }
+</section>
+
+@if (manualModalOpen()) {
+  <div class="modal-backdrop" (click)="closeManualModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <h2>Reserva de encaixe</h2>
+      <p class="text-muted">Crie uma reserva confirmada manualmente, sem passar pelo fluxo de pagamento do cliente.</p>
+
+      <form (ngSubmit)="submitManualBooking()">
+        @if (manualError()) {
+          <p class="alert alert-danger">{{ manualError() }}</p>
+        }
+
+        <div class="field">
+          <label for="manualCourt">Quadra</label>
+          <select id="manualCourt" name="manualCourt" [(ngModel)]="manualForm.courtId" required>
+            @for (court of courts(); track court.id) {
+              <option [ngValue]="court.id">{{ court.name }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="manualEmail">E-mail do cliente</label>
+          <input
+            id="manualEmail"
+            name="manualEmail"
+            type="email"
+            [(ngModel)]="manualForm.customerEmail"
+            required
+            placeholder="cliente@exemplo.com"
+          />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="manualDate">Data</label>
+            <input id="manualDate" name="manualDate" type="date" [(ngModel)]="manualForm.date" required />
+          </div>
+          <div class="field">
+            <label for="manualStart">Início</label>
+            <input id="manualStart" name="manualStart" type="time" [(ngModel)]="manualForm.startTime" required />
+          </div>
+        </div>
+        <p class="field-hint">A reserva dura 1 hora, como no fluxo padrão de agendamento.</p>
+
+        <div class="field">
+          <label for="manualNotes">Observações (opcional)</label>
+          <input id="manualNotes" name="manualNotes" type="text" [(ngModel)]="manualForm.notes" placeholder="Encaixe combinado por telefone" />
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" (click)="closeManualModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="manualSaving()">
+            {{ manualSaving() ? 'Salvando…' : 'Criar reserva' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

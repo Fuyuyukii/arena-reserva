@@ -1,0 +1,61 @@
+<section class="hero">
+  <div class="container hero-inner">
+    <div>
+      <h1>Quadras disponíveis</h1>
+      <p class="text-muted">
+        Consulte a agenda em tempo real e garanta seu horário antes que alguém chegue primeiro.
+      </p>
+    </div>
+    @if (courts().length) {
+      <div class="hero-stat">
+        <span class="hero-stat-value">{{ courts().length }}</span>
+        <span class="hero-stat-label">
+          {{ courts().length === 1 ? 'quadra disponível' : 'quadras disponíveis' }} agora
+        </span>
+      </div>
+    }
+  </div>
+</section>
+
+<section class="container">
+  <div class="filters">
+    @for (sport of sports; track sport) {
+      <button
+        type="button"
+        class="chip"
+        [class.chip-active]="filter() === sport"
+        (click)="selectSport(sport)"
+      >
+        {{ sport }}
+      </button>
+    }
+  </div>
+
+  @if (loading()) {
+    <p class="text-muted">Carregando quadras…</p>
+  } @else if (courts().length === 0) {
+    <div class="empty-state">
+      <p>Nenhuma quadra encontrada para este filtro.</p>
+    </div>
+  } @else {
+    <div class="grid">
+      @for (court of courts(); track court.id) {
+        <a class="card court-card" [routerLink]="['/quadras', court.id]">
+          <div class="court-card-top">
+            <span class="badge" [class]="badgeClass(court)">{{ court.sports.join(' · ') || 'Multiuso' }}</span>
+            <span class="court-status"><span class="status-dot"></span> disponível</span>
+          </div>
+          <h3>{{ court.name }}</h3>
+          <p class="court-meta">
+            {{ court.surfaceType }} · {{ court.covered ? 'coberta' : 'descoberta' }} · até
+            {{ court.capacity }} pessoas
+          </p>
+          <div class="court-card-footer">
+            <span class="court-price">R$ {{ court.hourlyRate.toFixed(2) }}<span>/hora</span></span>
+            <span class="court-cta">Ver horários disponíveis</span>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</section>

@@ -1,0 +1,90 @@
+<section class="container">
+  <form class="card form-card" (ngSubmit)="register()">
+    <h1>Criar conta</h1>
+    <p class="text-muted">Cadastre-se para reservar quadras em poucos passos.</p>
+
+    @if (error()) {
+      <p class="alert alert-danger">{{ error() }}</p>
+    }
+    @if (success()) {
+      <p class="alert alert-ok">Conta criada! Redirecionando para o login…</p>
+    }
+
+    <div class="field">
+      <label for="name">Nome completo</label>
+      <input id="name" name="name" type="text" [(ngModel)]="name" required placeholder="Maria da Silva" />
+    </div>
+
+    <div class="field">
+      <label for="email">E-mail</label>
+      <input id="email" name="email" type="email" [(ngModel)]="email" required autocomplete="email" placeholder="email@exemplo.com" />
+    </div>
+
+    <div class="field">
+      <label for="phone">Telefone</label>
+      <input
+        id="phone"
+        name="phone"
+        type="tel"
+        inputmode="numeric"
+        [ngModel]="phone"
+        (ngModelChange)="onPhoneInput($event)"
+        placeholder="(11) 91234-5678"
+        maxlength="15"
+      />
+    </div>
+
+    <div class="field">
+      <label for="taxId">CPF</label>
+      <input
+        id="taxId"
+        name="taxId"
+        type="text"
+        inputmode="numeric"
+        [ngModel]="taxId"
+        (ngModelChange)="onTaxIdInput($event)"
+        placeholder="000.000.000-00"
+        maxlength="14"
+      />
+    </div>
+
+    <div class="field">
+      <label for="password">Senha</label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        [(ngModel)]="password"
+        required
+        minlength="6"
+        autocomplete="new-password"
+        placeholder="Mínimo 6 caracteres"
+      />
+    </div>
+
+    <div class="field">
+      <label for="confirmPassword">Confirmar senha</label>
+      <input
+        id="confirmPassword"
+        name="confirmPassword"
+        type="password"
+        [(ngModel)]="confirmPassword"
+        required
+        autocomplete="new-password"
+        placeholder="Repita a senha"
+      />
+      @if (passwordsMismatch) {
+        <span class="field-error">As senhas não coincidem.</span>
+      }
+    </div>
+
+    <button type="submit" class="btn btn-primary" [disabled]="loading() || passwordsMismatch">
+      {{ loading() ? 'Criando conta…' : 'Criar conta' }}
+    </button>
+
+    <p class="form-links">
+      <a routerLink="/login">Já tenho uma conta</a>
+      <span></span>
+    </p>
+  </form>
+</section>

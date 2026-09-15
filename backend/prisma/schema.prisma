@@ -1,0 +1,193 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMINISTRATOR
+}
+
+enum CourtStatus {
+  AVAILABLE
+  UNDER_MAINTENANCE
+  INACTIVE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+model User {
+  id            Int            @id @default(autoincrement())
+  name          String
+  email         String         @unique
+  passwordHash  String
+  phone         String?
+  active        Boolean        @default(true)
+  role          UserRole
+  createdAt     DateTime       @default(now())
+  customer      Customer?
+  administrator Administrator?
+
+  @@map("users")
+}
+
+model Customer {
+  id        Int       @id @default(autoincrement())
+  userId    Int       @unique
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  taxId     String?
+  birthDate DateTime?
+  bookings  Booking[]
+
+  @@map("customers")
+}
+
+model Administrator {
+  id             Int           @id @default(autoincrement())
+  userId         Int           @unique
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobTitle       String?
+  accessProfile  String?
+  sportsCenterId Int?
+  sportsCenter   SportsCenter? @relation(fields: [sportsCenterId], references: [id])
+
+  @@map("administrators")
+}
+
+model SportsCenter {
+  id             Int             @id @default(autoincrement())
+  name           String
+  taxId          String
+  phone          String
+  address        Address?
+  administrators Administrator[]
+  courts         Court[]
+
+  @@map("sports_centers")
+}
+
+model Address {
+  id             Int          @id @default(autoincrement())
+  street         String
+  number         String
+  district       String
+  city           String
+  state          String
+  postalCode     String
+  sportsCenterId Int          @unique
+  sportsCenter   SportsCenter @relation(fields: [sportsCenterId], references: [id], onDelete: Cascade)
+
+  @@map("addresses")
+}
+
+model Sport {
+  id     Int          @id @default(autoincrement())
+  name   String       @unique
+  courts CourtSport[]
+
+  @@map("sports")
+}
+
+model Court {
+  id             Int              @id @default(autoincrement())
+  name           String
+  surfaceType    String
+  covered        Boolean          @default(false)
+  capacity       Int
+  hourlyRate     Decimal          @db.Decimal(10, 2)
+  status         CourtStatus      @default(AVAILABLE)
+  sportsCenterId Int
+  sportsCenter   SportsCenter     @relation(fields: [sportsCenterId], references: [id], onDelete: Cascade)
+  sports         CourtSport[]
+  operatingHours OperatingHours[]
+  blocks         CourtBlock[]
+  bookings       Booking[]
+
+  @@map("courts")
+}
+
+model CourtSport {
+  courtId Int
+  sportId Int
+  court   Court @relation(fields: [courtId], references: [id], onDelete: Cascade)
+  sport   Sport @relation(fields: [sportId], references: [id], onDelete: Cascade)
+
+  @@id([courtId, sportId])
+  @@map("court_sports")
+}
+
+model OperatingHours {
+  id          Int    @id @default(autoincrement())
+  dayOfWeek   Int
+  openingTime String
+  closingTime String
+  courtId     Int
+  court       Court  @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@map("operating_hours")
+}
+
+model CourtBlock {
+  id       Int      @id @default(autoincrement())
+  startsAt DateTime
+  endsAt   DateTime
+  reason   String?
+  courtId  Int
+  court    Court    @relation(fields: [courtId], references: [id], onDelete: Cascade)
+
+  @@map("court_blocks")
+}
+
+model Booking {
+  id            Int             @id @default(autoincrement())
+  startsAt      DateTime
+  endsAt        DateTime
+  status        BookingStatus   @default(PENDING)
+  totalAmount   Decimal         @db.Decimal(10, 2)
+  createdAt     DateTime        @default(now())
+  holdExpiresAt DateTime?
+  notes         String?
+  courtId       Int
+  court         Court           @relation(fields: [courtId], references: [id])
+  customerId    Int
+  customer      Customer        @relation(fields: [customerId], references: [id])
+  payment       Payment?
+  notifications Notification[]
+
+  @@map("bookings")
+}
+
+model Payment {
+  id            Int       @id @default(autoincrement())
+  amount        Decimal   @db.Decimal(10, 2)
+  method        String
+  state         String
+  transactionId String?
+  paidAt        DateTime?
+  bookingId     Int       @unique
+  booking       Booking   @relation(fields: [bookingId], references: [id])
+
+  @@map("payments")
+}
+
+model Notification {
+  id        Int       @id @default(autoincrement())
+  channel   String
+  type      String
+  message   String
+  sentAt    DateTime?
+  bookingId Int
+  booking   Booking   @relation(fields: [bookingId], references: [id])
+
+  @@map("notifications")
+}

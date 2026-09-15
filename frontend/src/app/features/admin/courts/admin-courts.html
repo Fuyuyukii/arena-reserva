@@ -1,0 +1,197 @@
+<section class="container page">
+  <div class="page-header">
+    <div>
+      <h1>Administração de quadras</h1>
+      <p class="text-muted">Cadastre, edite e desative quadras do centro esportivo.</p>
+    </div>
+    <button type="button" class="btn btn-primary" (click)="openCreateModal()">Adicionar quadra</button>
+  </div>
+
+  @if (listError()) {
+    <p class="alert alert-danger">{{ listError() }}</p>
+  }
+
+  @if (loading()) {
+    <p class="text-muted">Carregando quadras…</p>
+  } @else if (courts().length === 0) {
+    <div class="empty-state">
+      <p>Nenhuma quadra cadastrada ainda.</p>
+      <button type="button" class="btn btn-primary" (click)="openCreateModal()">Adicionar quadra</button>
+    </div>
+  } @else {
+    <div class="table-responsive">
+      <table class="tabela tabela-clicavel">
+        <thead>
+          <tr>
+            <th>Quadra</th>
+            <th>Esportes</th>
+            <th>Valor/hora</th>
+            <th>Horário</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (court of courts(); track court.id) {
+            <tr (click)="openEditModal(court)">
+              <td>{{ court.name }}</td>
+              <td>{{ court.sports.join(', ') || '—' }}</td>
+              <td>R$ {{ court.hourlyRate.toFixed(2) }}</td>
+              <td>
+                {{ court.operatingHours[0] ? court.operatingHours[0].openingTime + '–' + court.operatingHours[0].closingTime : '—' }}
+              </td>
+              <td>
+                <span
+                  class="badge"
+                  [class.badge-ok]="court.status === 'AVAILABLE'"
+                  [class.badge-warn]="court.status === 'UNDER_MAINTENANCE'"
+                  [class.badge-danger]="court.status === 'INACTIVE'"
+                >
+                  {{ court.status === 'AVAILABLE' ? 'Disponível' : court.status === 'UNDER_MAINTENANCE' ? 'Manutenção' : 'Inativa' }}
+                </span>
+              </td>
+              <td class="actions" (click)="$event.stopPropagation()">
+                <button type="button" class="btn btn-ghost btn-sm" (click)="openEditModal(court)">Editar</button>
+                <button type="button" class="btn btn-ghost btn-sm" (click)="openBlocksModal(court)">Bloqueios</button>
+                <button type="button" class="btn btn-danger btn-sm" (click)="remove(court)">Excluir</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (courtModalOpen()) {
+  <div class="modal-backdrop" (click)="closeCourtModal()">
+    <div class="modal-card" (click)="$event.stopPropagation()">
+      <h2>{{ courtModalMode() === 'create' ? 'Nova quadra' : 'Editar quadra' }}</h2>
+      <p class="text-muted">Preencha os dados da quadra.</p>
+
+      <form (ngSubmit)="submitCourtModal()">
+        @if (formError()) {
+          <p class="alert alert-danger">{{ formError() }}</p>
+        }
+
+        <div class="field">
+          <label for="name">Nome</label>
+          <input id="name" name="name" type="text" [(ngModel)]="form.name" required placeholder="Quadra 3 - Beach Tennis" />
+        </div>
+
+        <div class="field">
+          <label for="surfaceType">Tipo de superfície</label>
+          <input id="surfaceType" name="surfaceType" type="text" [(ngModel)]="form.surfaceType" required placeholder="Grama sintética" />
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="capacity">Capacidade</label>
+            <input id="capacity" name="capacity" type="number" min="1" [(ngModel)]="form.capacity" required />
+          </div>
+          <div class="field">
+            <label for="hourlyRate">Valor / hora (R$)</label>
+            <input id="hourlyRate" name="hourlyRate" type="number" min="0" step="0.01" [(ngModel)]="form.hourlyRate" required />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="openingTime">Abre às</label>
+            <input id="openingTime" name="openingTime" type="time" [(ngModel)]="form.openingTime" required />
+          </div>
+          <div class="field">
+            <label for="closingTime">Fecha às</label>
+            <input id="closingTime" name="closingTime" type="time" [(ngModel)]="form.closingTime" required />
+          </div>
+        </div>
+        <p class="field-hint">Mesmo horário todos os dias da semana.</p>
+
+        <div class="field">
+          <label for="sports">Esportes (separados por vírgula)</label>
+          <input id="sports" name="sports" type="text" [(ngModel)]="sportsText" placeholder="Futsal, Vôlei" />
+        </div>
+
+        @if (courtModalMode() === 'edit') {
+          <div class="field">
+            <label for="status">Status</label>
+            <select id="status" name="status" [(ngModel)]="form.status">
+              @for (option of statusOptions; track option.value) {
+                <option [value]="option.value">{{ option.label }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <label class="checkbox-field">
+          <input type="checkbox" name="covered" [(ngModel)]="form.covered" />
+          Quadra coberta
+        </label>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" (click)="closeCourtModal()">Cancelar</button>
+          <button type="submit" class="btn btn-primary" [disabled]="saving()">
+            {{ saving() ? 'Salvando…' : 'Salvar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (blocksModalOpen()) {
+  <div class="modal-backdrop" (click)="closeBlocksModal()">
+    <div class="modal-card modal-wide" (click)="$event.stopPropagation()">
+      <h2>Bloqueios de horário</h2>
+      <p class="text-muted">{{ blocksCourt()?.name }} — reserva o horário pra manutenção ou outro motivo, sem criar uma reserva de cliente.</p>
+
+      @if (blockError()) {
+        <p class="alert alert-danger">{{ blockError() }}</p>
+      }
+
+      <div class="block-form">
+        <div class="field">
+          <label for="blockDate">Data</label>
+          <input id="blockDate" type="date" [(ngModel)]="blockForm.date" name="blockDate" />
+        </div>
+        <div class="field">
+          <label for="blockStart">Início</label>
+          <input id="blockStart" type="time" [(ngModel)]="blockForm.startTime" name="blockStart" />
+        </div>
+        <div class="field">
+          <label for="blockEnd">Fim</label>
+          <input id="blockEnd" type="time" [(ngModel)]="blockForm.endTime" name="blockEnd" />
+        </div>
+        <div class="field block-reason">
+          <label for="blockReason">Motivo (opcional)</label>
+          <input id="blockReason" type="text" [(ngModel)]="blockForm.reason" name="blockReason" placeholder="Manutenção do piso" />
+        </div>
+        <button type="button" class="btn btn-primary btn-sm" (click)="addBlock()">Bloquear</button>
+      </div>
+
+      @if (blocksLoading()) {
+        <p class="text-muted">Carregando bloqueios…</p>
+      } @else if (blocks().length === 0) {
+        <p class="text-muted">Nenhum bloqueio cadastrado para esta quadra.</p>
+      } @else {
+        <ul class="blocks-list">
+          @for (block of blocks(); track block.id) {
+            <li>
+              <span>
+                {{ block.start | date: 'dd/MM/yyyy HH:mm' }} – {{ block.end | date: 'HH:mm' }}
+                @if (block.reason) {
+                  <em>({{ block.reason }})</em>
+                }
+              </span>
+              <button type="button" class="btn btn-danger btn-sm" (click)="removeBlock(block.id)">Remover</button>
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" (click)="closeBlocksModal()">Fechar</button>
+      </div>
+    </div>
+  </div>
+}

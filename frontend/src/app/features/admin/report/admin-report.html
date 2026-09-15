@@ -1,0 +1,77 @@
+<section class="container page">
+  <div class="page-header">
+    <div>
+      <h1>Relatório de utilização</h1>
+      <p class="text-muted">Reservas e receita acumulada por quadra.</p>
+    </div>
+  </div>
+
+  <form class="filters" (ngSubmit)="applyFilters()">
+    <div class="field">
+      <label for="startDate">De</label>
+      <input id="startDate" name="startDate" type="date" [(ngModel)]="filters.startDate" />
+    </div>
+    <div class="field">
+      <label for="endDate">Até</label>
+      <input id="endDate" name="endDate" type="date" [(ngModel)]="filters.endDate" />
+    </div>
+    <div class="field">
+      <label for="courtId">Quadra</label>
+      <select id="courtId" name="courtId" [(ngModel)]="filters.courtId">
+        <option [ngValue]="null">Todas</option>
+        @for (court of courts(); track court.id) {
+          <option [ngValue]="court.id">{{ court.name }}</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label for="sport">Esporte</label>
+      <select id="sport" name="sport" [(ngModel)]="filters.sport">
+        <option value="">Todos</option>
+        @for (sport of sportOptions; track sport) {
+          <option [value]="sport">{{ sport }}</option>
+        }
+      </select>
+    </div>
+    <div class="filters-actions">
+      <button type="submit" class="btn btn-primary btn-sm">Filtrar</button>
+      <button type="button" class="btn btn-ghost btn-sm" (click)="clearFilters()">Limpar</button>
+    </div>
+  </form>
+
+  @if (loading()) {
+    <p class="text-muted">Carregando relatório…</p>
+  } @else if (rows().length === 0) {
+    <div class="empty-state">
+      <p>Nenhuma reserva encontrada para os filtros selecionados.</p>
+    </div>
+  } @else {
+    <div class="table-responsive">
+    <table class="tabela">
+      <thead>
+        <tr>
+          <th>Quadra</th>
+          <th>Total de reservas</th>
+          <th>Receita acumulada</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of rows(); track row.courtId) {
+          <tr>
+            <td>{{ row.courtName }}</td>
+            <td>{{ row.totalBookings }}</td>
+            <td>R$ {{ row.totalRevenue.toFixed(2) }}</td>
+          </tr>
+        }
+      </tbody>
+      <tfoot>
+        <tr>
+          <td>Total</td>
+          <td>{{ totalBookings }}</td>
+          <td>R$ {{ totalRevenue.toFixed(2) }}</td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+  }
+</section>
