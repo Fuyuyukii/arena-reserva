@@ -1,0 +1,165 @@
+@if (court(); as c) {
+  <section class="hero">
+    <div class="container">
+      <a routerLink="/" class="back-link">Todas as quadras</a>
+      <h1>{{ c.name }}</h1>
+      <p class="text-on-ink-muted">
+        {{ c.surfaceType }} · {{ c.covered ? 'coberta' : 'descoberta' }} · até {{ c.capacity }} pessoas ·
+        {{ c.sports.join(', ') || 'multiuso' }}
+      </p>
+    </div>
+  </section>
+
+  <section class="container layout">
+    <div class="slots-panel card">
+      @if (message(); as m) {
+        <p class="alert" [class.alert-ok]="m.type === 'ok'" [class.alert-danger]="m.type === 'error'">
+          {{ m.text }}
+        </p>
+      }
+
+      @if (heldBooking(); as hold) {
+        <div class="checkout">
+          <div class="panel-header">
+            <h2>Pagamento</h2>
+            <span class="countdown" [class.countdown-warning]="remainingSeconds() <= 60">
+              Expira em {{ remainingLabel }}
+            </span>
+          </div>
+
+          <div class="checkout-summary">
+            <span>{{ c.name }} · {{ hold.start | date: 'dd/MM/yyyy HH:mm' }}</span>
+            <strong>R$ {{ hold.totalAmount.toFixed(2) }}</strong>
+          </div>
+
+          <div class="payment-methods">
+            <button
+              type="button"
+              class="method-option"
+              [class.method-active]="paymentMethod() === 'PIX'"
+              (click)="paymentMethod.set('PIX')"
+            >
+              PIX
+            </button>
+            <button
+              type="button"
+              class="method-option"
+              [class.method-active]="paymentMethod() === 'CREDIT_CARD'"
+              (click)="paymentMethod.set('CREDIT_CARD')"
+            >
+              Cartão de crédito
+            </button>
+          </div>
+
+          @if (paymentMethod() === 'PIX') {
+            <div class="pix-box">
+              <div class="pix-qr" aria-hidden="true"></div>
+              <div class="pix-details">
+                <p class="text-muted">Escaneie o QR code ou use o código copia e cola abaixo.</p>
+                <code class="pix-code">00020126580014BR.GOV.BCB.PIX0136arena-reserva-demo-5204000053039865802BR</code>
+                <p class="pix-note">Nesta demonstração, o pagamento por PIX é aprovado automaticamente.</p>
+              </div>
+            </div>
+          } @else {
+            <div class="card-form">
+              <div class="field">
+                <label for="cardName">Nome no cartão</label>
+                <input id="cardName" name="cardName" type="text" [(ngModel)]="cardName" placeholder="Como está impresso no cartão" />
+              </div>
+              <div class="field">
+                <label for="cardNumber">Número do cartão</label>
+                <input
+                  id="cardNumber"
+                  name="cardNumber"
+                  type="text"
+                  inputmode="numeric"
+                  [ngModel]="cardNumber"
+                  (ngModelChange)="onCardNumberInput($event)"
+                  placeholder="0000 0000 0000 0000"
+                  maxlength="19"
+                />
+              </div>
+              <div class="field-row">
+                <div class="field">
+                  <label for="cardExpiry">Validade</label>
+                  <input
+                    id="cardExpiry"
+                    name="cardExpiry"
+                    type="text"
+                    inputmode="numeric"
+                    [ngModel]="cardExpiry"
+                    (ngModelChange)="onCardExpiryInput($event)"
+                    placeholder="MM/AA"
+                    maxlength="5"
+                  />
+                </div>
+                <div class="field">
+                  <label for="cardCvv">CVV</label>
+                  <input id="cardCvv" name="cardCvv" type="text" inputmode="numeric" [(ngModel)]="cardCvv" placeholder="000" maxlength="4" />
+                </div>
+              </div>
+              <p class="pix-note">Cartão de demonstração — nenhum dado real é enviado ou armazenado.</p>
+            </div>
+          }
+
+          <div class="checkout-actions">
+            <button type="button" class="btn btn-ghost" [disabled]="processingPayment()" (click)="cancelCheckout()">
+              Voltar aos horários
+            </button>
+            <button type="button" class="btn btn-primary btn-pay" [disabled]="processingPayment()" (click)="pay()">
+              {{ processingPayment() ? 'Processando pagamento…' : 'Pagar R$ ' + hold.totalAmount.toFixed(2) + ' e confirmar' }}
+            </button>
+          </div>
+        </div>
+      } @else {
+        <div class="panel-header">
+          <h2>Horários</h2>
+          <input
+            type="date"
+            [value]="date()"
+            (change)="changeDate($any($event.target).value)"
+            class="date-input"
+          />
+        </div>
+
+        @if (loadingSlots()) {
+          <p class="text-muted">Carregando horários…</p>
+        } @else if (slots().length === 0) {
+          <div class="empty-state">
+            <p>Nenhum horário disponível nesta data.</p>
+          </div>
+        } @else {
+          <div class="slot-groups">
+            @for (group of slotGroups(); track group.label) {
+              <div class="slot-group">
+                <h3 class="slot-group-label">{{ group.label }}</h3>
+                <div class="slots">
+                  @for (slot of group.slots; track slot) {
+                    <button type="button" class="slot" [disabled]="holding()" (click)="selectSlot(slot)">
+                      {{ slot }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+          <p class="slots-legend">Toque em um horário para reservar 1 hora nesta quadra.</p>
+        }
+      }
+    </div>
+
+    <aside class="summary-panel card">
+      <h3>Valor</h3>
+      <p class="hourly-rate">R$ {{ c.hourlyRate.toFixed(2) }} <span>/ hora</span></p>
+      @if (!auth.loggedIn()) {
+        <p class="text-muted">
+          <a routerLink="/login">Entre na sua conta</a> para reservar um horário.
+        </p>
+      }
+    </aside>
+  </section>
+} @else {
+  <section class="container">
+    <p class="text-muted">Carregando quadra…</p>
+  </section>
+}

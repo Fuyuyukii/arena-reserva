@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: arena-reserva-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: arena
+      POSTGRES_PASSWORD: arena
+      POSTGRES_DB: arena_reserva
+    ports:
+      - "5432:5432"
+    volumes:
+      - arena-db-data:/var/lib/postgresql/data
+
+volumes:
+  arena-db-data:

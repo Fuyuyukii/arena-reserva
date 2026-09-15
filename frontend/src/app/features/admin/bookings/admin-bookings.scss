@@ -1,0 +1,17 @@
+.actions {
+  display: flex;
+  gap: 8px;
+  white-space: nowrap;
+  align-items: center;
+}
+
+.customer-name {
+  display: block;
+  font-weight: 600;
+}
+
+.customer-email {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
