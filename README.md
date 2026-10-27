@@ -38,7 +38,21 @@ Clicar num horário cria a reserva com status `PENDING` (e expira em 5 min se n�
 
 Como o envio de e-mail é simulado (`ConsoleNotificationClient` só loga no console), `POST /users/forgot-password` devolve o token de redefinição na própria resposta e a tela "Esqueci minha senha" mostra um link direto para `/redefinir-senha?token=...`. **Isso nunca deveria acontecer com um provedor de e-mail real** — é só para o fluxo ser demonstrável sem precisar checar o log do servidor.
 
-## Rodando localmente
+## Rodando com um comando só
+
+Pré-requisito: **Node.js 22.22.3+ ou 24.15+** (com nvm: `nvm install 24` e `nvm use 24`). Não precisa de Docker nem de PostgreSQL instalado.
+
+Na raiz do projeto:
+
+```bash
+npm start
+```
+
+Na primeira vez ele instala as dependências e cria um PostgreSQL embutido em `.data/postgres`. Em toda execução ele aplica as migrations, roda o seed (sem duplicar), sobe a API e o frontend juntos e abre o navegador quando tudo estiver no ar. Se as portas padrão (`3000` da API, `4200` do frontend) estiverem ocupadas, ele usa a próxima livre e mostra no terminal quais usou. `Ctrl+C` para tudo, inclusive o banco. Para não abrir o navegador: `npm start -- --no-open`.
+
+Para zerar o banco, pare o `npm start` e apague a pasta `.data/`.
+
+## Rodando manualmente (cada parte num terminal)
 
 ### Pré-requisitos
 
